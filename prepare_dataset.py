@@ -13,8 +13,8 @@ import shutil
 
 # Unduh dataset dari Kaggle dan unggah ke Google Colab
 !pip install -q kaggle
-os.environ['KAGGLE_USERNAME'] = 'rezaldi'
-os.environ['KAGGLE_KEY'] = '8cf4e8b9dbf3749ff34c10459a53a6f4'
+os.environ['KAGGLE_USERNAME'] = 'Your_USERNAME'
+os.environ['KAGGLE_KEY'] = 'Your_KAGGLE_KEY'
 !kaggle datasets download -d alexfordna/garbage-seg-10-v5
 # Ekstrak file zip
 with zipfile.ZipFile('/content/garbage-seg-10-v5.zip', 'r') as zip_ref:
