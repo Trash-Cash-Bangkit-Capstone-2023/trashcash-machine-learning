@@ -32,17 +32,4 @@ model.add(Dense(2, activation='softmax'))
 model.compile(optimizer=RMSprop(learning_rate=1e-4),
               loss='categorical_crossentropy',
               metrics=['accuracy'])
-
-# Melatih model
-history = model.fit(
-    train_generator,
-    steps_per_epoch=len(train_generator),
-    epochs=20,
-    validation_data=validation_generator,
-    validation_steps=len(validation_generator)
-)
-
-# Evaluasi model menggunakan dataset uji
-test_loss, test_acc = model.evaluate(test_generator, steps=len(test_generator))
-print('Test Loss:', test_loss)
-print('Test Accuracy:', test_acc)
+model.summary()
