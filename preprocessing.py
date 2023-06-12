@@ -7,92 +7,10 @@ Original file is located at
     https://colab.research.google.com/drive/1z6dThH52Y3DIOkXswC0QjD3bTSaXlS1U
 """
 
-import os
-import shutil
+import matplotlib.pyplot as plt
+import numpy as np
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-# Hitung jumlah gambar sellable dan unsellable pada train set
-num_sellable_images = sum([len(os.listdir(os.path.join(train_dir, 'sellable', category))) for category in sellable_categories])
-num_unsellable_images = sum([len(os.listdir(os.path.join(train_dir, 'unsellable', category))) for category in unsellable_categories])
-
-# Lakukan oversampling pada gambar unsellable
-oversampling_factor = num_sellable_images // num_unsellable_images
-
-for category in unsellable_categories:
-    category_train_dir = os.path.join(train_dir, 'unsellable', category)
-    images = os.listdir(category_train_dir)
-
-    for _ in range(oversampling_factor - 1):
-        for image in images:
-            src_path = os.path.join(category_train_dir, image)
-            dst_path = os.path.join(category_train_dir, f'oversampled_{_}_{image}')
-            shutil.copy(src_path, dst_path)
-
-# Memindahkan sebagian gambar dari train ke validation
-for category in sellable_categories:
-    category_train_dir = os.path.join(train_dir, 'sellable', category)
-    category_validation_dir = os.path.join(validation_dir, 'sellable', category)
-    os.makedirs(category_validation_dir, exist_ok=True)
-
-    images = os.listdir(category_train_dir)
-    num_images = len(images)
-    num_validation_images = int(num_images * 0.1)  # 10% untuk validation
-
-    validation_images = images[:num_validation_images]
-    for image in validation_images:
-        src_path = os.path.join(category_train_dir, image)
-        dst_path = os.path.join(category_validation_dir, image)
-        shutil.move(src_path, dst_path)
-
-# Memindahkan sebagian gambar dari train ke test
-for category in sellable_categories:
-    category_train_dir = os.path.join(train_dir, 'sellable', category)
-    category_test_dir = os.path.join(test_dir, 'sellable', category)
-    os.makedirs(category_test_dir, exist_ok=True)
-
-    images = os.listdir(category_train_dir)
-    num_images = len(images)
-    num_test_images = int(num_images * 0.1)  # 10% untuk test
-
-    test_images = images[:num_test_images]
-    for image in test_images:
-        src_path = os.path.join(category_train_dir, image)
-        dst_path = os.path.join(category_test_dir, image)
-        shutil.move(src_path, dst_path)
-
-# Memindahkan sebagian gambar dari train ke validation (unsellable)
-for category in unsellable_categories:
-    category_train_dir = os.path.join(train_dir, 'unsellable', category)
-    category_validation_dir = os.path.join(validation_dir, 'unsellable', category)
-    os.makedirs(category_validation_dir, exist_ok=True)
-
-    images = os.listdir(category_train_dir)
-    num_images = len(images)
-    num_validation_images = int(num_images * 0.1)  # 10% untuk validation
-
-    validation_images = images[:num_validation_images]
-    for image in validation_images:
-        src_path = os.path.join(category_train_dir, image)
-        dst_path = os.path.join(category_validation_dir, image)
-        shutil.move(src_path, dst_path)
-
-# Memindahkan sebagian gambar dari train ke test (unsellable)
-for category in unsellable_categories:
-    category_train_dir = os.path.join(train_dir, 'unsellable', category)
-    category_test_dir = os.path.join(test_dir, 'unsellable', category)
-    os.makedirs(category_test_dir, exist_ok=True)
-
-    images = os.listdir(category_train_dir)
-    num_images = len(images)
-    num_test_images = int(num_images * 0.1)  # 10% untuk test
-
-    test_images = images[:num_test_images]
-    for image in test_images:
-        src_path = os.path.join(category_train_dir, image)
-        dst_path = os.path.join(category_test_dir, image)
-        shutil.move(src_path, dst_path)
-
-# Augmentasi data pada direktori train
 train_datagen = ImageDataGenerator(
     rescale=1.0/255,
     rotation_range=20,
@@ -104,30 +22,56 @@ train_datagen = ImageDataGenerator(
     fill_mode='nearest'
 )
 
-# Augmentasi data pada direktori validation dan test
 validation_datagen = ImageDataGenerator(rescale=1.0 / 255.0)
 test_datagen = ImageDataGenerator(rescale=1.0 / 255.0)
 
-# Menerapkan augmentasi data pada direktori train
 train_generator = train_datagen.flow_from_directory(
     train_dir,
     target_size=(224, 224),
-    batch_size=32,
+    batch_size=64,
     class_mode='categorical'
 )
 
-# Menerapkan augmentasi data pada direktori validation
 validation_generator = validation_datagen.flow_from_directory(
     validation_dir,
     target_size=(224, 224),
-    batch_size=32,
+    batch_size=64,
     class_mode='categorical'
 )
 
-#Menerapkan augmentasi data pada direktori test
 test_generator = test_datagen.flow_from_directory(
     test_dir,
     target_size=(224, 224),
-    batch_size=32,
+    batch_size=64,
     class_mode='categorical'
 )
+
+# Fungsi untuk menampilkan beberapa contoh gambar
+def show_images(image_generator, num_images=5):
+    # Mendapatkan nama kategori
+    class_names = list(image_generator.class_indices.keys())
+    
+    # Mendapatkan beberapa contoh gambar
+    images, labels = next(image_generator)
+    
+    # Menampilkan gambar dan labelnya
+    fig, axes = plt.subplots(1, num_images, figsize=(20, 20))
+    axes = axes.flatten()
+    for i in range(num_images):
+        img = images[i]
+        label = labels[i]
+        class_name = class_names[np.argmax(label)]
+        axes[i].imshow(img)
+        axes[i].set_title(class_name)
+        axes[i].axis('off')
+    plt.tight_layout()
+    plt.show()
+
+# Memanggil fungsi show_images untuk train_generator
+show_images(train_generator)
+
+# Memanggil fungsi show_images untuk validation_generator
+show_images(validation_generator)
+
+# Memanggil fungsi show_images untuk test_generator
+show_images(test_generator)
