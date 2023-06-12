@@ -16,10 +16,41 @@ import shutil
 os.environ['KAGGLE_USERNAME'] = 'Your_USERNAME'
 os.environ['KAGGLE_KEY'] = 'Your_KAGGLE_KEY'
 !kaggle datasets download -d alexfordna/garbage-seg-10-v5
+!kaggle datasets download -d dataclusterlabs/masks-dataset 
 # Ekstrak file zip
 with zipfile.ZipFile('/content/garbage-seg-10-v5.zip', 'r') as zip_ref:
     zip_ref.extractall('/content/dataset')
 
+with zipfile.ZipFile('/content/masks-dataset.zip', 'r') as zip_ref:
+    zip_ref.extractall('/content/masks-datasett')
+# Tentukan direktori dataset medical yang akan digabungkan
+medical_dataset_dir = '/content/masks-datasett/images/images'
+
+# Tentukan direktori tujuan untuk menggabungkan dataset ke dalam kategori "medical"
+medical_target_dir = '/content/dataset/Garbage Seg 10 V5/medical'
+os.makedirs(medical_target_dir, exist_ok=True)
+
+# Pindahkan semua file dari dataset medical ke direktori tujuan
+for root, dirs, files in os.walk(medical_dataset_dir):
+    for file in files:
+        src_file = os.path.join(root, file)
+        shutil.move(src_file, medical_target_dir)
+
+print("Dataset medical telah digabungkan ke dalam kategori 'medical'.")
+# Tentukan direktori dataset medical yang akan digabungkan
+medical_dataset_dir = '/content/drive/MyDrive/fotosampah'
+
+# Tentukan direktori tujuan untuk menggabungkan dataset ke dalam kategori "medical"
+medical_target_dir = '/content/dataset/Garbage Seg 10 V5/medical'
+os.makedirs(medical_target_dir, exist_ok=True)
+
+# Pindahkan semua file dari dataset medical ke direktori tujuan
+for root, dirs, files in os.walk(medical_dataset_dir):
+    for file in files:
+        src_file = os.path.join(root, file)
+        shutil.move(src_file, medical_target_dir)
+
+print("Dataset medical telah digabungkan ke dalam kategori 'medical'.")
 # Buat folder untuk train, validation, dan test
 base_dir = '/content/dataset'
 os.makedirs(base_dir, exist_ok=True)
@@ -37,7 +68,6 @@ os.makedirs(test_dir, exist_ok=True)
 sellable_categories = ['battery', 'cardboard', 'clothes', 'glass', 'metal', 'paper', 'plastic', 'shoes']
 # Kategori sampah yang tidak bisa dijual (unsellable)
 unsellable_categories = ['food', 'medical']
-
 # Memindahkan gambar ke folder yang sesuai
 for category in sellable_categories:
     category_train_dir = os.path.join(train_dir, 'sellable', category)
@@ -62,3 +92,132 @@ for category in unsellable_categories:
         src_path = os.path.join(images_dir, image)
         dst_path = os.path.join(category_train_dir, image)
         shutil.copy(src_path, dst_path)
+
+# Menentukan jumlah oversampling yang dibutuhkan
+food_count = 6500
+medical_count = 6500
+food_dir = os.path.join(train_dir, 'unsellable', 'food')
+medical_dir = os.path.join(train_dir, 'unsellable', 'medical')
+
+# Membuat direktori tujuan untuk oversampling
+oversampled_food_dir = '/content/dataset/train/unsellable/food'
+oversampled_medical_dir = '/content/dataset/train/unsellable/medical'
+
+os.makedirs(oversampled_food_dir, exist_ok=True)
+os.makedirs(oversampled_medical_dir, exist_ok=True)
+
+# Melakukan oversampling pada kategori 'food'
+food_images = os.listdir(food_dir)
+oversampling_factor = food_count // len(food_images)
+
+for image in food_images:
+    src_path = os.path.join(food_dir, image)
+
+    # Mengulang pengulangan gambar sesuai faktor oversampling
+    for i in range(oversampling_factor):
+        new_image_name = f"oversampled_{i}_{image}"
+        dst_path = os.path.join(oversampled_food_dir, new_image_name)
+        shutil.copy(src_path, dst_path)
+
+# Melakukan oversampling pada kategori 'medical'
+medical_images = os.listdir(medical_dir)
+oversampling_factor = medical_count // len(medical_images)
+
+for image in medical_images:
+    src_path = os.path.join(medical_dir, image)
+
+    # Mengulang pengulangan gambar sesuai faktor oversampling
+    for i in range(oversampling_factor):
+        new_image_name = f"oversampled_{i}_{image}"
+        dst_path = os.path.join(oversampled_medical_dir, new_image_name)
+        shutil.copy(src_path, dst_path)
+# Menampilkan hasil setelah oversampling
+food_oversampled_count = len(os.listdir(oversampled_food_dir))
+medical_oversampled_count = len(os.listdir(oversampled_medical_dir))
+
+print(f"Jumlah food setelah oversampling: {food_oversampled_count}")
+print(f"Jumlah medical setelah oversampling: {medical_oversampled_count}")
+
+# Memindahkan sebagian gambar dari train ke validation
+for category in sellable_categories:
+    category_train_dir = os.path.join(train_dir, 'sellable', category)
+    category_validation_dir = os.path.join(validation_dir, 'sellable', category)
+    os.makedirs(category_validation_dir, exist_ok=True)
+
+    images = os.listdir(category_train_dir)
+    num_images = len(images)
+    num_validation_images = int(num_images * 0.1)  # 10% untuk validation
+
+    validation_images = images[:num_validation_images]
+    for image in validation_images:
+        src_path = os.path.join(category_train_dir, image)
+        dst_path = os.path.join(category_validation_dir, image)
+        shutil.move(src_path, dst_path)
+
+# Memindahkan sebagian gambar dari train ke test
+for category in sellable_categories:
+    category_train_dir = os.path.join(train_dir, 'sellable', category)
+    category_test_dir = os.path.join(test_dir, 'sellable', category)
+    os.makedirs(category_test_dir, exist_ok=True)
+
+    images = os.listdir(category_train_dir)
+    num_images = len(images)
+    num_test_images = int(num_images * 0.1)  # 10% untuk test
+
+    test_images = images[:num_test_images]
+    for image in test_images:
+        src_path = os.path.join(category_train_dir, image)
+        dst_path = os.path.join(category_test_dir, image)
+        shutil.move(src_path, dst_path)
+
+# Memindahkan sebagian gambar dari train ke validation (unsellable)
+for category in unsellable_categories:
+    category_train_dir = os.path.join(train_dir, 'unsellable', category)
+    category_validation_dir = os.path.join(validation_dir, 'unsellable', category)
+    os.makedirs(category_validation_dir, exist_ok=True)
+
+    images = os.listdir(category_train_dir)
+    num_images = len(images)
+    num_validation_images = int(num_images * 0.1)  # 10% untuk validation
+
+    validation_images = images[:num_validation_images]
+    for image in validation_images:
+        src_path = os.path.join(category_train_dir, image)
+        dst_path = os.path.join(category_validation_dir, image)
+        shutil.move(src_path, dst_path)
+
+# Memindahkan sebagian gambar dari train ke test (unsellable)
+for category in unsellable_categories:
+    category_train_dir = os.path.join(train_dir, 'unsellable', category)
+    category_test_dir = os.path.join(test_dir, 'unsellable', category)
+    os.makedirs(category_test_dir, exist_ok=True)
+
+    images = os.listdir(category_train_dir)
+    num_images = len(images)
+    num_test_images = int(num_images * 0.1)  # 10% untuk test
+
+    test_images = images[:num_test_images]
+    for image in test_images:
+        src_path = os.path.join(category_train_dir, image)
+        dst_path = os.path.join(category_test_dir, image)
+        shutil.move(src_path, dst_path)
+
+# melihat kelas yang ada di direktori train, validation, dan test: 
+train_classes = os.listdir(os.path.join(train_dir))
+validation_classes = os.listdir(os.path.join(validation_dir))
+test_classes = os.listdir(os.path.join(test_dir))
+
+print("Classes in Train directory:")
+print(train_classes)
+
+print("Classes in Validation directory:")
+print(validation_classes)
+
+print("Classes in Test directory:")
+print(test_classes)
+
+# Menghitung jumlah gambar pada setiap kategori train
+train_sellable_counts = sum([len(files) for r, d, files in os.walk(os.path.join(train_dir, 'sellable'))])
+train_unsellable_counts = sum([len(files) for r, d, files in os.walk(os.path.join(train_dir, 'unsellable'))])
+print(f"Jumlah gambar sellable pada train: {train_sellable_counts}")
+print(f"Jumlah gambar unsellable pada train: {train_unsellable_counts}")
