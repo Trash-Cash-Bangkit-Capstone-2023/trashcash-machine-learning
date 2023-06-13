@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trash Cash</title>
+    <style>
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        #image-preview {
+            width: 224px;
+            height: 224px;
+            margin-bottom: 16px;
+        }
+
+        #result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        #upload-button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        #upload-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Trash Cash</h1>
+        <input type="file" id="file-input" accept="image/*">
+        <div id="image-preview"></div>
+        <button id="upload-button" disabled>Upload</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const imagePreview = document.getElementById('image-preview');
+        const uploadButton = document.getElementById('upload-button');
+        const resultDiv = document.getElementById('result');
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageUrl = e.target.result;
+                    imagePreview.innerHTML = `<img src="${imageUrl}" alt="Preview">`;
+                    uploadButton.disabled = false;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.innerHTML = '';
+                uploadButton.disabled = true;
+            }
+        });
+
+        uploadButton.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            resultDiv.textContent = 'Classifying...';
+
+            fetch('/classify', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const result = data.result;
+                resultDiv.textContent = `Result: ${result}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.textContent = 'An error occurred during classification.';
+            });
+        });
+    </script>
+</body>
+</html>
